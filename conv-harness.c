@@ -97,7 +97,7 @@ struct sparse_matrix * sparse_matrix_dense2sparse(float ** matrix, int nkernels,
   for ( i = 0; i < nkernels; i++ ) {
     for ( j = 0; j < nchannels; j++ ) {
       if ( abs(matrix[i][j]) != 0.0 ) {
-	non_zeros++;
+      	non_zeros++;
       }
     }
   }
@@ -112,11 +112,11 @@ struct sparse_matrix * sparse_matrix_dense2sparse(float ** matrix, int nkernels,
     result->kernel_starts[i] = nvalues;
     for ( j = 0; j < nchannels; j++ ) {
       if ( abs(matrix[i][j]) != 0.0 ) {
-	// record non-zero value and its channel number
-	result->values[nvalues] = matrix[i][j];
-	result->channel_numbers[nvalues] = j;
-	nvalues++;
-	assert( nvalues <= non_zeros );
+      	// record non-zero value and its channel number
+      	result->values[nvalues] = matrix[i][j];
+      	result->channel_numbers[nvalues] = j;
+      	nvalues++;
+      	assert( nvalues <= non_zeros );
       }
     }
   }
@@ -267,27 +267,27 @@ float **** gen_random_4d_matrix(int dim0, int dim1, int dim2, int dim3, int nz_r
     for ( j = 0; j < dim1; j++ ) {
       for ( k = 0; k < dim2; k++ ) {
         for ( l = 0; l < dim3; l++ ) {
-	  // generated a random number to decide if the value should be zero
-	  long long rand = random();
-	  // nz ratio is the reciprocal of the proportion of values that
-	  // are non-zero; a nz ratio of 1 means all values are non-zero.
-	  // a nz ratio of 3 means that one in three values is non-zero
-	  if ( (rand % nz_ratio) == 0 ) {
-	    // now use the random number to set a useful non-zero value
-	    // cut down the range and bias the mean to reduce
-	    // the likelihood of large floating point round-off errors
-	    int reduced_range = (rand % range);
-	    // but make sure that cutting down the range does not give us
-	    // a zero value; this loop might never terminate, but probably will
-	    while ( reduced_range == 0 ) {
-	      reduced_range = random() % range;
-	    }
-	    result[i][j][k][l] = reduced_range;
-	  }
-	  else {
-	    // the nz ratio tells us that this value must be zero
-	    result[i][j][k][l] = 0;
-	  }
+	        // generated a random number to decide if the value should be zero
+	        long long rand = random();
+	        // nz ratio is the reciprocal of the proportion of values that
+	        // are non-zero; a nz ratio of 1 means all values are non-zero.
+	        // a nz ratio of 3 means that one in three values is non-zero
+	        if ( (rand % nz_ratio) == 0 ) {
+	          // now use the random number to set a useful non-zero value
+	          // cut down the range and bias the mean to reduce
+	          // the likelihood of large floating point round-off errors
+	          int reduced_range = (rand % range);
+	          // but make sure that cutting down the range does not give us
+	          // a zero value; this loop might never terminate, but probably will
+	          while ( reduced_range == 0 ) {
+	            reduced_range = random() % range;
+	          }
+	          result[i][j][k][l] = reduced_range;
+	        }
+	        else {
+	          // the nz ratio tells us that this value must be zero
+	          result[i][j][k][l] = 0;
+	        }
         }
       }
     }
@@ -362,9 +362,9 @@ void multichannel_conv_dense(float *** image, float **** kernels,
   for ( m = 0; m < nkernels; m++ ) {
     for ( w = 0; w < width; w++ ) {
       for ( h = 0; h < height; h++ ) {
-	for ( x = 0; x < kernel_order; x++) {
-	  for ( y = 0; y < kernel_order; y++ ) {
-	    for ( c = 0; c < nchannels; c++ ) {
+	      for ( x = 0; x < kernel_order; x++) {
+	       for ( y = 0; y < kernel_order; y++ ) {
+	          for ( c = 0; c < nchannels; c++ ) {
                output[m][h][w] += image[w+x][h+y][c] * kernels[x][y][m][c];
             }
           }
@@ -389,7 +389,7 @@ void multichannel_conv_sparse(float *** image, struct sparse_matrix *** kernels,
   for ( m = 0; m < nkernels; m++ ) {
     for ( h = 0; h < height; h++ ) {
       for ( w = 0; w < width; w++ ) {
-	output[m][h][w] = 0.0;
+	      output[m][h][w] = 0.0;
       }
     }
   }
@@ -401,17 +401,17 @@ void multichannel_conv_sparse(float *** image, struct sparse_matrix *** kernels,
     for ( h = 0; h < height; h++ ) {
       double sum = 0.0;
       for ( x = 0; x < kernel_order; x++) {
-	for ( y = 0; y < kernel_order; y++ ) {
-	  struct sparse_matrix * kernel = kernels[x][y];
-	  for ( m = 0; m < nkernels; m++ ) {
-	    for ( index = kernel->kernel_starts[m]; index < kernel->kernel_starts[m+1]; index++ ) {
-	      int this_c = kernel->channel_numbers[index];
-	      assert( (this_c >= 0) && (this_c < nchannels) );
-	      value = kernel->values[index];
-	      output[m][h][w] += image[w+x][h+y][this_c] * value;
-	    }
-	  } // m
-	} // y
+	      for ( y = 0; y < kernel_order; y++ ) {
+	        struct sparse_matrix * kernel = kernels[x][y];
+	        for ( m = 0; m < nkernels; m++ ) {
+	          for ( index = kernel->kernel_starts[m]; index < kernel->kernel_starts[m+1]; index++ ) {
+	            int this_c = kernel->channel_numbers[index];
+	            assert( (this_c >= 0) && (this_c < nchannels) );
+	            value = kernel->values[index];
+	            output[m][h][w] += image[w+x][h+y][this_c] * value;
+	          }
+	        } // m
+	      } // y
       } // x
     } // h
   }// w
