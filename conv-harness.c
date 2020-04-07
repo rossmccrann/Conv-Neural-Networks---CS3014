@@ -92,6 +92,7 @@ struct sparse_matrix * sparse_matrix_dense2sparse(float ** matrix, int nkernels,
   struct sparse_matrix * result;
   int nvalues;
   
+  
   // find the number of non-zero values in the dense matrix
   for ( i = 0; i < nkernels; i++ ) {
     for ( j = 0; j < nchannels; j++ ) {
@@ -106,6 +107,7 @@ struct sparse_matrix * sparse_matrix_dense2sparse(float ** matrix, int nkernels,
   
   // now copy the values from the dense matrix to the sparse matrix
   nvalues = 0;
+  
   for ( i = 0; i < nkernels; i++ ) {
     result->kernel_starts[i] = nvalues;
     for ( j = 0; j < nchannels; j++ ) {
@@ -185,12 +187,18 @@ float **** new_empty_4d_matrix(int dim0, int dim1, int dim2, int dim3)
   assert ( mat2 != NULL );
   assert ( mat3 != NULL );
   
+  //Moved dim1*dim2*dim3, dim1*dim2 and dim3*dim2 calcs outside loop
+  int loopDim2 = dim1*dim2;
+  int loopDim3 = dim1*dim2*dim3;
+  int loopDim3 = dim2*dim3;
+  // 
+  
   for ( i = 0; i < dim0; i++ ) {
     result[i] = &(mat1[i*dim1]);
     for ( j = 0; j < dim1; j++ ) {
-      result[i][j] = &(mat2[i*dim1*dim2 + j*dim2]);
+      result[i][j] = &(mat2[i*loopDim2 + j*dim2]);
       for ( k = 0; k < dim2; k++ ) {
-        result[i][j][k] = &(mat3[i*dim1*dim2*dim3+j*dim2*dim3+k*dim3]);
+        result[i][j][k] = &(mat3[i*loopDim3+j*loopDim3+k*dim3]);
       }
     }
   }
@@ -333,6 +341,8 @@ void check_result(float *** result, float *** control,
   }
 }
 
+
+
 /* a slow but correct version of dense convolution written by David */
 void multichannel_conv_dense(float *** image, float **** kernels,
 		       float *** output, int width, int height,
@@ -365,10 +375,13 @@ void multichannel_conv_dense(float *** image, float **** kernels,
 }
 
 
+
+
 /* a slow but correct version of sparse convolution written by David */
 void multichannel_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 		       float *** output, int width, int height,
 		       int nchannels, int nkernels, int kernel_order) {
+				   
   int h, w, x, y, c, m, index;
   float value;
 
@@ -409,8 +422,75 @@ void multichannel_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 		       float *** output, int width, int height,
 		       int nchannels, int nkernels, int kernel_order) {
-  multichannel_conv_sparse(image, kernels, output, width, height,
-			   nchannels, nkernels, kernel_order);
+				   
+ int h, w, x, y, c, m;
+
+ // initialize the output matrix to zero
+  for ( m = 0; m < nkernels; m++ ) {
+    for ( h = 0; h < height; h++ ) {
+      for ( w = 0; w < width; w++ ) {
+	output[m][h][w] = 0.0;
+      }
+    }
+  }
+
+  for ( m = 0; m < nkernels; m++ ) {
+    for ( w = 0; w < width; w++ ) {
+      for ( h = 0; h < height; h++ ) {
+	for ( x = 0; x < kernel_order; x++) {
+	  for ( y = 0; y < kernel_order; y++ ) {
+	    for ( c = 0; c < nchannels; c++ ) {
+               output[m][h][w] += image[w+x][h+y][c] * kernels[x][y][m][c];
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
+
+/* a slow but correct version of sparse convolution written by David */
+void multichannel_conv_sparse(float *** image, struct sparse_matrix *** kernels,
+		       float *** output, int width, int height,
+		       int nchannels, int nkernels, int kernel_order) {
+				   
+  int h, w, x, y, c, m, index;
+  float value;
+
+  // initialize the output matrix to zero
+  for ( m = 0; m < nkernels; m++ ) {
+    for ( h = 0; h < height; h++ ) {
+      for ( w = 0; w < width; w++ ) {
+	output[m][h][w] = 0.0;
+      }
+    }
+  }
+
+  DEBUGGING(fprintf(stderr, "w=%d, h=%d, c=%d\n", w, h, c));
+
+  // now compute multichannel, multikernel convolution
+  for ( w = 0; w < width; w++ ) {
+    for ( h = 0; h < height; h++ ) {
+      double sum = 0.0;
+      for ( x = 0; x < kernel_order; x++) {
+	for ( y = 0; y < kernel_order; y++ ) {
+	  struct sparse_matrix * kernel = kernels[x][y];
+	  for ( m = 0; m < nkernels; m++ ) {
+	    for ( index = kernel->kernel_starts[m]; index < kernel->kernel_starts[m+1]; index++ ) {
+	      int this_c = kernel->channel_numbers[index];
+	      assert( (this_c >= 0) && (this_c < nchannels) );
+	      value = kernel->values[index];
+	      output[m][h][w] += image[w+x][h+y][this_c] * value;
+	    }
+	  } // m
+	} // y
+      } // x
+    } // h
+  }// w
+			   
 }
 
 int main(int argc, char ** argv) {
