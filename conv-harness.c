@@ -424,10 +424,15 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 		       int nchannels, int nkernels, int kernel_order) {
 	int h, w, x, y, c, m, index;
   float value;
-  
+
   // initialize the output matrix to zero
- 
-  output[nkernels][height][width] = { 0 };
+  for ( m = 0; m < nkernels; m++ ) {
+    for ( h = 0; h < height; h++ ) {
+      for ( w = 0; w < width; w++ ) {
+	output[m][h][w] = 0.0;
+      }
+    }
+  }
 
   DEBUGGING(fprintf(stderr, "w=%d, h=%d, c=%d\n", w, h, c));
 
