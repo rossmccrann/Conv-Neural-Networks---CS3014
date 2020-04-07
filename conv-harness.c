@@ -424,13 +424,10 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 		       int nchannels, int nkernels, int kernel_order) {
 	int h, w, x, y, c, m, index;
   float value;
-  int nkernals = nkernals;
-  int height = height;
-  int width = width;
+  
   // initialize the output matrix to zero
  
-  output[nkernals][height][width] ={0};
-
+  output[nkernels][height][width] ={ 0 };
   DEBUGGING(fprintf(stderr, "w=%d, h=%d, c=%d\n", w, h, c));
 
   // now compute multichannel, multikernel convolution
