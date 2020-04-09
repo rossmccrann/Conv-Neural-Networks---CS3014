@@ -474,7 +474,7 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 	int h, w, x, y, c, m, index;
   float value;
 
-  pragma omp parallel for if (num_kernels > 63) private(h, w, x, y, c, m, sum, index, value) shared(image, kernels, output) collapse(3)
+  #pragma omp parallel for if (num_kernels > 63) private(h, w, x, y, c, m, sum, index, value) shared(image, kernels, output) collapse(3)
 
 
   // initialize the output matrix to zero
