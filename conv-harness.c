@@ -502,7 +502,7 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
     for ( h = 0; h < height; h++ ) {
       for ( w = 0; w < width; w++ ) {
 	       float check = output[m][h][w] ;
-         printf("%d\n", &check );
+         printf("%d\n", *check );
       }
     }
   }
