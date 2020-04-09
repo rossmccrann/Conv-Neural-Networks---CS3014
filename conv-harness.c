@@ -498,7 +498,7 @@ int main(int argc, char ** argv) {
   assert( nchannels >= 1 );
   assert( nkernels >= 1 );
   assert( nz_ratio >= 1 );
-  output[nkernels][height][width] = {0.0};
+  
   /* allocate the matrices */
   image = gen_random_3d_matrix(width+kernel_order, height + kernel_order,
                                nchannels, 1); // nz_ratio == 1, ie no sparsity
@@ -510,7 +510,7 @@ int main(int argc, char ** argv) {
   output = new_empty_3d_matrix(nkernels, width, height);
 
   control_output = new_empty_3d_matrix(nkernels, width, height);
-
+  output[nkernels][height][width] = {0.0};
   /* use a simple multichannel convolution routine to produce control result */
   multichannel_conv_dense(image, kernels, control_output, width,
                     height, nchannels, nkernels, kernel_order);
