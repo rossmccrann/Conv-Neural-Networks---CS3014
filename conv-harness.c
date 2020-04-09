@@ -425,7 +425,14 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 	int h, w, x, y, c, m, index;
   float value;
 
-  
+  // initialize the output matrix to zero
+  for ( m = 0; m < nkernels; m++ ) {
+    for ( h = 0; h < height; h++ ) {
+      for ( w = 0; w < width; w++ ) {
+	output[m][h][w] = 0.0;
+      }
+    }
+  }
 
   DEBUGGING(fprintf(stderr, "w=%d, h=%d, c=%d\n", w, h, c));
 
@@ -469,7 +476,7 @@ int main(int argc, char ** argv) {
   struct timeval start_time;
   struct timeval stop_time;
   int nz_ratio = 1; // by default we just have a dense matrix
-  
+
   if ( argc != 7 ) {
     fprintf(stderr, "Usage: conv-harness <image_width> <image_height> <kernel_order> <number of channels> <number of kernels> <non-zero ratio>\n");
     exit(1);
@@ -498,7 +505,7 @@ int main(int argc, char ** argv) {
   assert( nchannels >= 1 );
   assert( nkernels >= 1 );
   assert( nz_ratio >= 1 );
-  
+
   /* allocate the matrices */
   image = gen_random_3d_matrix(width+kernel_order, height + kernel_order,
                                nchannels, 1); // nz_ratio == 1, ie no sparsity
@@ -510,7 +517,7 @@ int main(int argc, char ** argv) {
   output = new_empty_3d_matrix(nkernels, width, height);
 
   control_output = new_empty_3d_matrix(nkernels, width, height);
-  output[nkernels][height][width] = {0.0};
+
   /* use a simple multichannel convolution routine to produce control result */
   multichannel_conv_dense(image, kernels, control_output, width,
                     height, nchannels, nkernels, kernel_order);
