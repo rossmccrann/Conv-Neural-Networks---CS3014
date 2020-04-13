@@ -418,41 +418,47 @@ void multichannel_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 }
 
 
-/* the fast version of sparse convolution written by the team */
-void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
-		       float *** output, int width, int height,
-		       int nchannels, int nkernels, int kernel_order) {
-				   
-	int h, w, x, y, c, m, index;
-	float value;
+void team_conv_sparse(float ** * image, struct sparse_matrix ** * kernels,
+   float ** * output, int width, int height,
+   int nchannels, int nkernels, int kernel_order) {
 
+   int h, w, x, y, c, m, index,start,end;
+   float value;
 
-  DEBUGGING(fprintf(stderr, "w=%d, h=%d, c=%d\n", w, h, c));
+   DEBUGGING(fprintf(stderr, "w=%d, h=%d, c=%d\n", w, h, c));
 
-  // now compute multichannel, multikernel convolution
-  for ( w = 0; w < width; w++ ) {
-    for ( h = 0; h < height; h++ ) {
-      double sum = 0.0;
-      for ( x = 0; x < kernel_order; x++) {
-	for ( y = 0; y < kernel_order; y++ ) {
-	  struct sparse_matrix * kernel = kernels[x][y];
-	  for ( m = 0; m < nkernels; m++ ) {
-		  //instead of constantly accessing output [m][h][w] save it to a variable and add at the end 
-		  register float  outputSaver = 0.0;
-		  
-	    for ( index = kernel->kernel_starts[m]; index < kernel->kernel_starts[m+1]; index++ ) {
-	      int this_c = kernel->channel_numbers[index];
-	      assert( (this_c >= 0) && (this_c < nchannels) );
-	      value = kernel->values[index];
-	      outputSaver += image[w+x][h+y][this_c] * value;
-	    }
-		output[m][h][w] += outputSaver;
-	  } // m
-	} // y
-      } // x
-    } // h
-  }// w
-}
+   // now compute multichannel, multikernel convolution
+   int imgSize = height * width;
+   int kernelSize = kernel_order * kernel_order;
+
+   for (int wh = 0; wh < imgSize; ++wh) {
+      w = wh / width;
+      h = wh % width;
+      for (int xy = 0; xy < kernelSize; xy++) {
+         x = xy / kernel_order;
+         y = xy % kernel_order;
+
+         float * imageRef = image[w + x][h + y];
+         struct sparse_matrix * kernel = kernels[x][y];
+
+         for (m = 0; m < nkernels; m++) {
+
+            //instead of constantly accessing output [m][h][w] save it to a variable and add at the end 
+            register float outputSaver = 0.0;
+			start = kernel -> kernel_starts[m]; 
+			end = kernel -> kernel_starts[m + 1]; 
+            for (index = start; index < end; index++) {
+               int this_c = kernel -> channel_numbers[index];
+               assert((this_c >= 0) && (this_c < nchannels));
+               value = kernel -> values[index];
+               outputSaver += imageRef[this_c] * value;
+            }
+			
+            output[m][h][w] += outputSaver;
+         } // m
+      } // y
+   } // x
+} // h
 
 
 
