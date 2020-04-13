@@ -426,14 +426,6 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 	int h, w, x, y, c, m, index;
 	float value;
 
-  // initialize the output matrix to zero
-  for ( m = 0; m < nkernels; m++ ) {
-    for ( h = 0; h < height; h++ ) {
-      for ( w = 0; w < width; w++ ) {
-	output[m][h][w] = 0.0;
-      }
-    }
-  }
 
   DEBUGGING(fprintf(stderr, "w=%d, h=%d, c=%d\n", w, h, c));
 
@@ -445,14 +437,16 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 	for ( y = 0; y < kernel_order; y++ ) {
 	  struct sparse_matrix * kernel = kernels[x][y];
 	  for ( m = 0; m < nkernels; m++ ) {
-		  int outputSaver = output[m][h][w];
+		  //instead of constantly accessing output [m][h][w] save it to a variable and add at the end 
+		  register float  outputSaver = 0.0;
+		  
 	    for ( index = kernel->kernel_starts[m]; index < kernel->kernel_starts[m+1]; index++ ) {
 	      int this_c = kernel->channel_numbers[index];
 	      assert( (this_c >= 0) && (this_c < nchannels) );
 	      value = kernel->values[index];
 	      outputSaver += image[w+x][h+y][this_c] * value;
 	    }
-		output[m][h][w] = outputSaver;
+		output[m][h][w] += outputSaver;
 	  } // m
 	} // y
       } // x
