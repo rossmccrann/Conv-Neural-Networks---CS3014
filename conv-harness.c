@@ -422,8 +422,9 @@ void multichannel_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 		       float *** output, int width, int height,
 		       int nchannels, int nkernels, int kernel_order) {
+				   
 	int h, w, x, y, c, m, index;
-  float value;
+	float value;
 
   // initialize the output matrix to zero
   for ( m = 0; m < nkernels; m++ ) {
@@ -444,12 +445,14 @@ void team_conv_sparse(float *** image, struct sparse_matrix *** kernels,
 	for ( y = 0; y < kernel_order; y++ ) {
 	  struct sparse_matrix * kernel = kernels[x][y];
 	  for ( m = 0; m < nkernels; m++ ) {
+		  int outputSaver = output[m][h][w];
 	    for ( index = kernel->kernel_starts[m]; index < kernel->kernel_starts[m+1]; index++ ) {
 	      int this_c = kernel->channel_numbers[index];
 	      assert( (this_c >= 0) && (this_c < nchannels) );
 	      value = kernel->values[index];
-	      output[m][h][w] += image[w+x][h+y][this_c] * value;
+	      outputSaver += image[w+x][h+y][this_c] * value;
 	    }
+		output[m][h][w] = outputSaver;
 	  } // m
 	} // y
       } // x
