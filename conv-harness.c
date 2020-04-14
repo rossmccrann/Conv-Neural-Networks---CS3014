@@ -445,20 +445,25 @@ void team_conv_sparse(float ** * image, struct sparse_matrix ** * kernels,
 
             //instead of constantly accessing output [m][h][w] save it to a variable and add at the end 
             register float outputSaver = 0.0;
-			start = kernel -> kernel_starts[m]; 
+			
+			
 			end = kernel -> kernel_starts[m + 1]; 
-            for (index = start; index < end; index++) {
+			
+            for (index = kernel -> kernel_starts[m]; index < end; index++) {
+				
                int this_c = kernel -> channel_numbers[index];
                assert((this_c >= 0) && (this_c < nchannels));
                value = kernel -> values[index];
                outputSaver += imageRef[this_c] * value;
+			   
             }
 			
             output[m][h][w] += outputSaver;
-         } // m
-      } // y
-   } // x
-} // h
+			
+         } // 
+      } // 
+   } // 
+} // 
 
 
 
